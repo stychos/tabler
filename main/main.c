@@ -65,7 +65,7 @@ void app_main(void)
     if (rc_status != RC522_OK) {
         ESP_LOGE(TAG, "RC522 init failed (status=%d)", rc_status);
         printf("RC522 init FAILED. Check wiring.\r\n");
-        printf("Continuing without reader...\r\n\r\n");
+        printf("Continuing without reader...\r\n");
     } else {
         uint8_t fw = rc522_firmware_version(&rc522);
         printf("RC522:   Firmware 0x%02X %s\r\n\r\n",

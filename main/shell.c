@@ -117,7 +117,7 @@ static int shell_readline(char *buf, int max_len)
 static bool shell_check_cancel(void)
 {
     int c = shell_getchar(0);
-    return (c == 0x1B || c == ' ');
+    return (c == 0x1B);
 }
 
 // ---------------------------------------------------------------------------
@@ -190,7 +190,7 @@ static void cmd_info(const char *args)
     shell_printf("  SAK: 0x%02X\r\n", st->uid.sak);
 
     // Parse -sN argument
-    int sector = 1; // default
+    int sector = 0; // default
     if (args && args[0]) {
         const char *p = args;
         while (*p && isspace((unsigned char)*p)) p++;
@@ -214,7 +214,7 @@ static void cmd_info(const char *args)
 
 static void cmd_read(void)
 {
-    shell_puts("Present tag... (ESC/Space to cancel)\r\n");
+    shell_puts("Present tag... (ESC to cancel)\r\n");
 
     while (!shell_check_cancel()) {
         rc522_status_t status = rc522_is_new_card_present(s_rc522);
@@ -318,7 +318,7 @@ static void cmd_write(const char *args)
     if (force)
         shell_puts(ANSI_YELLOW "Force mode: sector trailers WILL be written!\r\n" ANSI_RESET);
 
-    shell_printf("Will write %d block(s). Present target tag... (ESC/Space to cancel)\r\n",
+    shell_printf("Will write %d block(s). Present target tag... (ESC to cancel)\r\n",
                  write_count);
 
     while (!shell_check_cancel()) {
@@ -411,7 +411,7 @@ static void cmd_edit(void)
     memcpy(edit_buf, st->data, sizeof(edit_buf));
     memset(dirty, 0, sizeof(dirty));
 
-    int cur_sector = 1;
+    int cur_sector = 0;
     int cur_block  = 0;  // 0-3 within sector
     int cur_byte   = 0;  // 0-15
     int cur_nibble = 0;  // 0=high, 1=low
@@ -683,7 +683,7 @@ void shell_run(rc522_handle_t *rc522)
 
     char cmd[CMD_BUF_SIZE];
 
-    shell_puts("\r\n\r\n");
+    shell_puts("\r\n");
 
     while (true) {
         shell_puts(PROMPT);
