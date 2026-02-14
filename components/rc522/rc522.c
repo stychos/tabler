@@ -45,8 +45,10 @@ static uint8_t rc522_read_reg(rc522_handle_t *h, uint8_t reg)
 static void rc522_write_reg_multi(rc522_handle_t *h, uint8_t reg,
                                    const uint8_t *data, uint8_t len)
 {
+    // MFRC522 FIFO is 64 bytes; clamp to prevent stack overflow
+    if (len > 64) len = 64;
     uint8_t addr = (reg << 1) & 0x7E;
-    uint8_t tx[65];
+    uint8_t tx[65]; // 1 addr byte + up to 64 data bytes
     tx[0] = addr;
     memcpy(&tx[1], data, len);
     spi_transaction_t t = {

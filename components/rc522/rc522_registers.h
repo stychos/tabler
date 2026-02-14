@@ -89,3 +89,7 @@
 #define PICC_CMD_MF_INCREMENT       0xC1
 #define PICC_CMD_MF_RESTORE         0xC2
 #define PICC_CMD_MF_TRANSFER        0xB0
+
+// Ultralight / NTAG commands
+#define PICC_CMD_UL_WRITE           0xA2
+#define PICC_CMD_GET_VERSION        0x60

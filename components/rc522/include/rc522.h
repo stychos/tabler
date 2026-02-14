@@ -26,6 +26,24 @@ void rc522_stop_crypto1(rc522_handle_t *handle);
 #define RC522_AUTH_KEY_A  0x60
 #define RC522_AUTH_KEY_B  0x61
 
+// --- PICC type detection ---
+
+// Detect PICC type from SAK + GET_VERSION (card must be selected)
+rc522_picc_type_t rc522_detect_picc_type(rc522_handle_t *handle, uint8_t sak);
+
+// Get static info (name, capacity) for a PICC type
+const rc522_picc_info_t *rc522_get_picc_info(rc522_picc_type_t type);
+
+// --- MIFARE Ultralight / NTAG layer ---
+
+// Read 4 consecutive pages (16 bytes) starting at page_addr
+rc522_status_t rc522_ultralight_read(rc522_handle_t *handle, uint8_t page_addr,
+                                      uint8_t *buf, uint8_t *buf_len);
+
+// Write 4 bytes to a single page
+rc522_status_t rc522_ultralight_write(rc522_handle_t *handle, uint8_t page_addr,
+                                       const uint8_t *data);
+
 // --- MIFARE Classic layer ---
 
 // Authenticate a sector using Key A or Key B

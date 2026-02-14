@@ -168,3 +168,74 @@ void rc522_stop_crypto1(rc522_handle_t *handle)
 {
     clear_bits(handle, RC522_REG_STATUS2, 0x08);
 }
+
+// ---------------------------------------------------------------------------
+// PICC type detection
+// ---------------------------------------------------------------------------
+
+rc522_picc_type_t rc522_detect_picc_type(rc522_handle_t *handle, uint8_t sak)
+{
+    // SAK-based detection first
+    switch (sak) {
+        case 0x08: return RC522_PICC_TYPE_CLASSIC_1K;
+        case 0x18: return RC522_PICC_TYPE_CLASSIC_4K;
+        case 0x20: return RC522_PICC_TYPE_DESFIRE;
+        case 0x10:
+        case 0x11: return RC522_PICC_TYPE_PLUS;
+        case 0x00: break;  // Could be Ultralight/NTAG — need GET_VERSION
+        default:   return RC522_PICC_TYPE_UNKNOWN;
+    }
+
+    // SAK 0x00: send GET_VERSION command to distinguish UL variants
+    uint8_t cmd_buf[3];
+    cmd_buf[0] = PICC_CMD_GET_VERSION;
+    rc522_status_t status = rc522_calculate_crc(handle, cmd_buf, 1, &cmd_buf[1]);
+    if (status != RC522_OK) return RC522_PICC_TYPE_ULTRALIGHT;
+
+    uint8_t version[10];
+    uint8_t version_len = sizeof(version);
+    status = rc522_transceive(handle, PCD_CMD_TRANSCEIVE,
+                               cmd_buf, 3, version, &version_len,
+                               NULL, 0, false);
+    if (status != RC522_OK) {
+        // Timeout means original Ultralight (no GET_VERSION support)
+        return RC522_PICC_TYPE_ULTRALIGHT;
+    }
+
+    // version[6] is storage size byte
+    if (version_len >= 7) {
+        switch (version[6]) {
+            case 0x0F: return RC522_PICC_TYPE_NTAG213;
+            case 0x11: return RC522_PICC_TYPE_NTAG215;
+            case 0x13: return RC522_PICC_TYPE_NTAG216;
+            case 0x26: return RC522_PICC_TYPE_ULTRALIGHT_C;
+        }
+    }
+
+    return RC522_PICC_TYPE_ULTRALIGHT;
+}
+
+// ---------------------------------------------------------------------------
+// PICC info lookup table
+// ---------------------------------------------------------------------------
+
+static const rc522_picc_info_t picc_info_table[] = {
+    { RC522_PICC_TYPE_UNKNOWN,      "Unknown",         0,   0   },
+    { RC522_PICC_TYPE_CLASSIC_1K,   "MIFARE Classic 1K", 64,  0   },
+    { RC522_PICC_TYPE_CLASSIC_4K,   "MIFARE Classic 4K", 256, 0   },
+    { RC522_PICC_TYPE_ULTRALIGHT,   "MIFARE Ultralight", 0,   16  },
+    { RC522_PICC_TYPE_ULTRALIGHT_C, "MIFARE Ultralight C", 0, 48  },
+    { RC522_PICC_TYPE_NTAG213,      "NTAG213",         0,   45  },
+    { RC522_PICC_TYPE_NTAG215,      "NTAG215",         0,   135 },
+    { RC522_PICC_TYPE_NTAG216,      "NTAG216",         0,   231 },
+    { RC522_PICC_TYPE_DESFIRE,      "MIFARE DESFire",  0,   0   },
+    { RC522_PICC_TYPE_PLUS,         "MIFARE Plus",     0,   0   },
+};
+
+const rc522_picc_info_t *rc522_get_picc_info(rc522_picc_type_t type)
+{
+    for (int i = 0; i < (int)(sizeof(picc_info_table) / sizeof(picc_info_table[0])); i++) {
+        if (picc_info_table[i].type == type) return &picc_info_table[i];
+    }
+    return &picc_info_table[0]; // UNKNOWN
+}

@@ -26,6 +26,28 @@ typedef struct {
     uint8_t sak;    // Select Acknowledge
 } rc522_uid_t;
 
+// PICC type identifiers
+typedef enum {
+    RC522_PICC_TYPE_UNKNOWN = 0,
+    RC522_PICC_TYPE_CLASSIC_1K,
+    RC522_PICC_TYPE_CLASSIC_4K,
+    RC522_PICC_TYPE_ULTRALIGHT,
+    RC522_PICC_TYPE_ULTRALIGHT_C,
+    RC522_PICC_TYPE_NTAG213,
+    RC522_PICC_TYPE_NTAG215,
+    RC522_PICC_TYPE_NTAG216,
+    RC522_PICC_TYPE_DESFIRE,
+    RC522_PICC_TYPE_PLUS,
+} rc522_picc_type_t;
+
+// Static info about a PICC type
+typedef struct {
+    rc522_picc_type_t type;
+    const char       *name;
+    uint16_t          total_blocks;  // Classic: 16-byte blocks
+    uint16_t          total_pages;   // UL/NTAG: 4-byte pages
+} rc522_picc_info_t;
+
 // Driver handle (internal state)
 typedef struct {
     spi_device_handle_t spi;
